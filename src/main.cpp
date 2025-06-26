@@ -2,23 +2,26 @@
 #include <petscvec.h>
 #include <petscmat.h>
 #include <petscksp.h>
+#include <vector>
 #include "Mesh.hpp"
 
-Vec assembleField(SimpleMesh *mesh) {
-    Vec T;
-    VecCreateSeq(PETSC_COMM_WORLD, mesh->nx(), &T);
 
-    for (int i = 0; i < mesh->nx() - 1; i++) {
-        VecSetValue(T, i, 0.0, INSERT_VALUES);
-    }
-    VecSetValue(T, mesh->nx() - 1, 1.0, INSERT_VALUES);
-    VecAssemblyBegin(T);
-    VecAssemblyEnd(T);
+// Vec assembleField(SimpleMesh *mesh) {
+//     Vec T;
+//     VecCreateSeq(PETSC_COMM_WORLD, mesh->nx(), &T);
 
-    return T;
-}
+//     for (int i = 0; i < mesh->nx() - 1; i++) {
+//         VecSetValue(T, i, 0.0, INSERT_VALUES);
+//     }
+//     VecSetValue(T, mesh->nx() - 1, 1.0, INSERT_VALUES);
+//     VecAssemblyBegin(T);
+//     VecAssemblyEnd(T);
 
-void solve_upwind(Vec T, SimpleMesh *mesh, double u, double D) {
+//     return T;
+// }
+
+void solve_upwind(std::vector<double> &T, SimpleMesh *mesh, double u, double D) {
+    
     const double adv = u * 1.0;
     const double diff = D / mesh->dx() * 1.0;
     const double west_adv = (std::abs(adv) + adv) / 2.0;
@@ -48,12 +51,8 @@ void solve_upwind(Vec T, SimpleMesh *mesh, double u, double D) {
     Vec b;
     MatCreateVecs(A, &b, NULL);
 
-    PetscScalar T_w[2];
-    PetscInt idx[2] = {0, mesh->nx() - 2};
-    VecGetValues(T, 1, idx, T_w);
-
-    VecSetValue(b, 0, T_w[0] * (diff - west_adv), INSERT_VALUES);
-    VecSetValue(b, mesh->nx() - 3, T_w[1] * (diff - east_adv), INSERT_VALUES);
+    VecSetValue(b, 0, T[0] * (diff - west_adv), INSERT_VALUES);
+    VecSetValue(b, mesh->nx() - 3, T[mesh->nx() - 1] * (diff - east_adv), INSERT_VALUES);
 
     VecAssemblyBegin(b);
     VecAssemblyEnd(b);
@@ -80,13 +79,37 @@ void solve_upwind(Vec T, SimpleMesh *mesh, double u, double D) {
     for(int i = 1; i < mesh->nx() - 1; i++){
         PetscInt idx1 = i - 1;  // T_internal index
         VecGetValues(T_internal, 1, &idx1, &temp);
-        VecSetValue(T, i, temp, INSERT_VALUES);
+        T[i] = temp;
+        //VecSetValue(T, i, temp, INSERT_VALUES);
     }
 
     // Cleanup
     VecDestroy(&b);
     KSPDestroy(&ksp);
     VecDestroy(&T_internal);
+}
+
+void solve_exact(std::vector<double> &T, SimpleMesh *mesh, double u, double D){
+   std::cout << mesh->x(mesh->nx()-1) << std::endl;
+   std::cout << T[0] << std::endl;
+   std::cout << T[mesh->nx() - 1] << std::endl;
+    double const k = exp(u/D * mesh->x(mesh->nx() - 1));
+    double const C2 = (T[0] - T[mesh->nx() - 1]) / (1 - k);
+    double const C1 = T[0] - C2;
+
+
+    for(int i = 0; i < mesh->nx(); i++){
+        double solution = C1 + C2 * exp(u/D * mesh->x(i));
+        T[i] = solution;
+    }
+}
+
+void print_vector(std::vector<double> &vec){
+    std::cout<<"Vector"<<std::endl;
+
+    for (size_t i = 0; i < vec.size(); ++i){
+        std::cout << vec[i] << std::endl;
+    }
 }
 
 int main(int argc, char* argv[]) {
@@ -97,20 +120,32 @@ int main(int argc, char* argv[]) {
     double const    x0 = 0;
     double const    x1 = 1.0;
     int    const    nx = 10;
+    double const    T0 = 0;
+    double const    Tf = 1;
 
-    SimpleMesh mesh = SimpleMesh(0, 1, 10);
+    SimpleMesh mesh = SimpleMesh(0, 1, 5);
 
     double const Pe = u*mesh.dx() / (2*D);
 
     std::cout << "Pe = " << Pe << std::endl;
 
-    Vec T = assembleField(&mesh);
-
-    VecView(T, PETSC_VIEWER_STDOUT_WORLD);
+    std::vector<double> T(mesh.nx());
+    T[0] = T0;
+    T[mesh.nx() - 1] = Tf;
+    print_vector(T);
 
     solve_upwind(T, &mesh, 1.0, 0.5);
 
-    VecView(T, PETSC_VIEWER_STDOUT_WORLD);
+    std::cout << "Solved with upwind" << std::endl;
+    print_vector(T);
+
+    std::cout << "Exact solution" << std::endl;
+    std::vector<double> Texact(mesh.nx());
+    Texact[mesh.nx() - 1] = 1.0;
+    solve_exact(Texact, &mesh, u, D);
+    print_vector(Texact);
+    mesh.print_mesh();
+
 
     PetscFinalize();
     return 0;

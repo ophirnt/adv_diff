@@ -8,6 +8,7 @@ public:
     SimpleMesh(double x0, double x1, int nx);
     ~SimpleMesh() = default;
 
+    void print_mesh();
     double x(int i) const;
     double dx() const;
     int nx() const;
@@ -18,13 +19,28 @@ private:
 };
 
 // Constructor
-SimpleMesh::SimpleMesh(double x0, double x1, int nx) : x_(nx + 2), nx_(nx) {
+SimpleMesh::SimpleMesh(double x0, double x1, int nx) : x_(nx + 2), nx_(nx + 2) {
     dx_ = (x1 - x0) / nx;
+
+    std::cout << dx_ << nx_ << nx << std::endl;
+
     x_[0] = x0;
-    for (int i = 1; i <= nx; i++) {
+    x_[1] = x0 + dx_ / 2;
+    for (int i = 2; i < nx_; i++) {
         x_[i] = x_[i - 1] + dx_;
     }
+    x_[nx_ - 1] = x_[nx_ - 2] + dx_/2;
 }
+
+void SimpleMesh::print_mesh(){
+    std::cout << "MESH: ";
+    std::cout << x_[0];
+    for (int i = 1; i < nx_; i++){
+        std::cout << ", " << x_[i]; 
+    }
+    std::cout << std::endl;
+}
+
 // Accessor for spacing
 double SimpleMesh::dx() const {
     return dx_;
