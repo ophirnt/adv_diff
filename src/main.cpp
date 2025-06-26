@@ -90,9 +90,6 @@ void solve_upwind(std::vector<double> &T, SimpleMesh *mesh, double u, double D) 
 }
 
 void solve_exact(std::vector<double> &T, SimpleMesh *mesh, double u, double D){
-   std::cout << mesh->x(mesh->nx()-1) << std::endl;
-   std::cout << T[0] << std::endl;
-   std::cout << T[mesh->nx() - 1] << std::endl;
     double const k = exp(u/D * mesh->x(mesh->nx() - 1));
     double const C2 = (T[0] - T[mesh->nx() - 1]) / (1 - k);
     double const C1 = T[0] - C2;
@@ -123,7 +120,7 @@ int main(int argc, char* argv[]) {
     double const    T0 = 0;
     double const    Tf = 1;
 
-    SimpleMesh mesh = SimpleMesh(0, 1, 5);
+    SimpleMesh mesh = SimpleMesh(0, 1, 10);
 
     double const Pe = u*mesh.dx() / (2*D);
 
