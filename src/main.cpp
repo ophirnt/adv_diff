@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
     double const    T0 = 0;
     double const    Tf = 1;
 
-    SimpleMesh mesh = SimpleMesh(0, 1, 10);
+    SimpleMesh mesh = SimpleMesh(0, 1, 9);
 
     double const Pe = u*mesh.dx() / (2*D);
 

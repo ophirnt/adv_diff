@@ -24,12 +24,12 @@ void solve_cds(std::vector<double> &T, SimpleMesh *mesh, double u, double D) {
 
     for (int i = 0; i < mesh->nx() - 2; ++i) {
         if (i > 0)
-            MatSetValue(A, i, i - 1, -diff +adv, INSERT_VALUES);
+            MatSetValue(A, i, i - 1, -diff -adv, INSERT_VALUES);
 
         MatSetValue(A, i, i, 2 * diff, INSERT_VALUES);
 
         if (i < mesh->nx() - 3)
-            MatSetValue(A, i, i + 1, -diff -adv, INSERT_VALUES);
+            MatSetValue(A, i, i + 1, -diff +adv, INSERT_VALUES);
     }
 
     MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY);
@@ -46,6 +46,7 @@ void solve_cds(std::vector<double> &T, SimpleMesh *mesh, double u, double D) {
     VecAssemblyBegin(b);
     VecAssemblyEnd(b);
 
+    VecView(b, PETSC_VIEWER_STDOUT_SELF);
 
     KSP ksp;
     KSPCreate(PETSC_COMM_WORLD, &ksp);

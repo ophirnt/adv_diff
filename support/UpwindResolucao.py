@@ -16,6 +16,12 @@ def elem(epsilon, beta, h, zeta):
            beta/2 * np.array([[-1, 1],[-1,1]]) + \
            beta*zeta/2 * np.array([[1,-1],[-1,1]])
            
+def elem_first_order_upwind(epsilon, beta, h):
+    adv =  np.array([[0, 0],[1,-1]])# if beta > 0 else np.array([[0, -1],[0,1]]) 
+    return epsilon/h * np.array([[1,-1],[-1,1]]) + \
+        beta * adv
+
+
 def matriz_elementos(elem, n):
     ''' Constrói a matriz com todos os elementos da malha '''
     
@@ -38,6 +44,7 @@ ien = np.array([[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11]])
 A = np.zeros([11,11])
 A_upwind = np.zeros([11,11])
 A_exato = np.zeros([11,11])
+A_full_upwind = np.zeros([11,11])
 
 # Valores do problema
 
@@ -51,7 +58,7 @@ Peclet = beta*h/(2*epsilon)
 a = matriz_elementos(elem(epsilon, beta, h, 0),10)
 a_upwind = matriz_elementos(elem(epsilon, beta, h, 1),10)
 a_exato = matriz_elementos(elem(epsilon, beta, h, 1/np.tanh(Peclet) - 1/Peclet),10)
-
+a_full_upwind = matriz_elementos(elem_first_order_upwind(epsilon, beta, h),10)
 # Montagem das matrizes globais
 for k in range(10):
     for I in range(2):
@@ -60,7 +67,7 @@ for k in range(10):
             A[ien[k,I], ien[k,J]] = A[ien[k,I], ien[k,J]] + a[k,I,J]
             A_upwind[ien[k,I], ien[k,J]] = A_upwind[ien[k,I], ien[k,J]] + a_upwind[k,I,J]
             A_exato[ien[k,I], ien[k,J]] = A_exato[ien[k,I], ien[k,J]] + a_exato[k,I,J]
-
+            A_full_upwind[ien[k,I], ien[k,J]] = A_full_upwind[ien[k,I], ien[k,J]] + a_full_upwind[k,I,J]
 
 # Construção do vetor F
             
@@ -71,14 +78,17 @@ F = np.zeros(9)
 A = A[1:10]
 A_upwind = A_upwind[1:10]
 A_exato = A_exato[1:10]
+A_full_upwind = A_full_upwind[1:10]
 
 F_inst = F -A[:,10]*1 -A[:,0]*0
 F_upwind = F -A_upwind[:,10]*1 -A_upwind[:,0]*0
 F_exato = F -A_exato[:,10]*1 -A_exato[:,0]*0
+F_full_upwind = F -A_full_upwind[:,10]*1 -A_exato[:,0]*0
 
 A = A[:,1:10]
 A_upwind = A_upwind[:,1:10]
 A_exato = A_exato[:,1:10]
+A_full_upwind = A_full_upwind[:,1:10]
 
 # Solução exata
 
@@ -91,6 +101,7 @@ solucao = sol_exata(pos)
 u_inst = np.linalg.solve(A,F_inst)
 u_upwind = np.linalg.solve(A_upwind,F_upwind)
 u_exato = np.linalg.solve(A_exato,F_exato)
+u_full_upwind = np.linalg.solve(A_full_upwind, F_full_upwind)
 
 # Adicionando os valores conhecidos aos vetores solução
 u_inst = np.append(u_inst, np.array([1.]))
@@ -101,6 +112,9 @@ u_upwind = np.append(np.array([0.]), u_upwind)
 
 u_exato = np.append(u_exato, np.array([1.]))
 u_exato = np.append(np.array([0.]), u_exato)
+
+u_full_upwind = np.append(u_full_upwind, np.array([1.]))
+u_full_upwind = np.append(np.array([0.]), u_full_upwind)
 
 # Gráficos
 

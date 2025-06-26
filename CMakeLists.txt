@@ -1,4 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
+# Set MPI compilers (only works if done before project() in practice)
+set(CMAKE_C_COMPILER mpicc)
+set(CMAKE_CXX_COMPILER mpicxx)
+
 project(main CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -12,6 +16,8 @@ set(PETSC_PATH "${PETSC_DIR}/${PETSC_ARCH}")
 # Include and library paths
 include_directories(${PETSC_PATH}/include ${PETSC_DIR}/include)
 link_directories(${PETSC_PATH}/lib)
+
+
 
 add_executable(main src/main.cpp)
 
