@@ -10,6 +10,7 @@ public:
 
     void print_mesh();
     double x(int i) const;
+    const std::vector<double>& x() const;
     double dx() const;
     int nx() const;
 private:
@@ -49,6 +50,10 @@ double SimpleMesh::dx() const {
 // Accessor for position
 double SimpleMesh::x(int i) const {
     return x_[i];
+}
+
+const std::vector<double>& SimpleMesh::x() const{
+    return x_;
 }
 
 int SimpleMesh::nx() const {
