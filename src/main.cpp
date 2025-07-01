@@ -30,10 +30,10 @@ int main(int argc, char* argv[]) {
     double const    x0 = 0;
     double const    x1 = 1.0;
     int    const    nx = 10;
-    double const    T0 = 0;
-    double const    Tf = 1;
+    double const    T0 = 1;
+    double const    Tf = 0;
 
-    SimpleMesh mesh = SimpleMesh(0, 1, 9);
+    SimpleMesh mesh = SimpleMesh(0, 1, 5);
 
     double const Pe = u*mesh.dx() / (2*D);
 
@@ -44,12 +44,13 @@ int main(int argc, char* argv[]) {
     T[mesh.nx() - 1] = Tf;
     print_vector(T);
 
-    solve_upwind(T, &mesh, 1.0, 0.5);
+    solve_upwind(T, &mesh, 0.1, 0.1);
 
     std::cout << "Solved with upwind" << std::endl;
     print_vector(T);
 
-    solve_cds(T, &mesh, 1.0, 0.5);
+    std::cout << "Solved with CDS" << std::endl;
+    solve_cds(T, &mesh, 0.1, 0.1);
     print_vector(T);
 
     std::cout << "Exact solution" << std::endl;

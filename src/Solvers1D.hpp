@@ -22,15 +22,19 @@ void solve_cds(std::vector<double> &T, SimpleMesh *mesh, double u, double D) {
     MatSetType(A, MATSEQAIJ);
     MatSetUp(A);
 
-    for (int i = 0; i < mesh->nx() - 2; ++i) {
-        if (i > 0)
-            MatSetValue(A, i, i - 1, -diff -adv, INSERT_VALUES);
+    MatSetValue(A, 0, 0, adv +3*diff, INSERT_VALUES);
+    MatSetValue(A, 0, 1, adv -diff, INSERT_VALUES);
+    for (int i = 1; i < mesh->nx() - 3; ++i) {
+        // if (i > 0)
+        MatSetValue(A, i, i - 1, -diff -adv, INSERT_VALUES);
 
         MatSetValue(A, i, i, 2 * diff, INSERT_VALUES);
 
-        if (i < mesh->nx() - 3)
-            MatSetValue(A, i, i + 1, -diff +adv, INSERT_VALUES);
+        // if (i < mesh->nx() - 3)
+        MatSetValue(A, i, i + 1, -diff +adv, INSERT_VALUES);
     }
+    MatSetValue(A, mesh->nx() - 3, mesh->nx()-4,-adv -diff, INSERT_VALUES);
+    MatSetValue(A, mesh->nx() - 3, mesh->nx()-3,-adv +3*diff, INSERT_VALUES);
 
     MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY);
     MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY);
@@ -40,8 +44,8 @@ void solve_cds(std::vector<double> &T, SimpleMesh *mesh, double u, double D) {
     Vec b;
     MatCreateVecs(A, &b, NULL);
 
-    VecSetValue(b, 0, T[0] * (diff - west_adv), INSERT_VALUES);
-    VecSetValue(b, mesh->nx() - 3, T[mesh->nx() - 1] * (diff - east_adv), INSERT_VALUES);
+    VecSetValue(b, 0, T[0] * (2*adv +2*diff), INSERT_VALUES);
+    VecSetValue(b, mesh->nx() - 3, T[mesh->nx() - 1] * (+2*diff -2*adv), INSERT_VALUES);
 
     VecAssemblyBegin(b);
     VecAssemblyEnd(b);
@@ -63,7 +67,7 @@ void solve_cds(std::vector<double> &T, SimpleMesh *mesh, double u, double D) {
 
     // Optional: View solution and solver stats
     KSPView(ksp, PETSC_VIEWER_STDOUT_SELF);
-    VecView(T_internal, PETSC_VIEWER_STDOUT_SELF);
+    // VecView(T_internal, PETSC_VIEWER_STDOUT_SELF);
 
     PetscScalar temp;
     for(int i = 1; i < mesh->nx() - 1; i++){
@@ -95,15 +99,20 @@ void solve_upwind(std::vector<double> &T, SimpleMesh *mesh, double u, double D) 
     MatSetType(A, MATSEQAIJ);
     MatSetUp(A);
 
-    for (int i = 0; i < mesh->nx() - 2; ++i) {
-        if (i > 0)
-            MatSetValue(A, i, i - 1, -diff + west_adv, INSERT_VALUES);
+    MatSetValue(A, 0, 0, - adv +3*diff, INSERT_VALUES);
+    MatSetValue(A, 0, 1, -diff, INSERT_VALUES);
+    for (int i = 1; i < mesh->nx() - 3; ++i) {
+        // if (i > 0)
+        MatSetValue(A, i, i - 1, -diff +west_adv, INSERT_VALUES);
 
-        MatSetValue(A, i, i, 2 * diff - adv, INSERT_VALUES);
+        MatSetValue(A, i, i, 2 * diff -adv, INSERT_VALUES);
 
-        if (i < mesh->nx() - 3)
-            MatSetValue(A, i, i + 1, -diff + east_adv, INSERT_VALUES);
+        // if (i < mesh->nx() - 3)
+        MatSetValue(A, i, i + 1, -diff +east_adv, INSERT_VALUES);
     }
+
+    MatSetValue(A, mesh->nx() - 3, mesh->nx()-4,west_adv -diff, INSERT_VALUES);
+    MatSetValue(A, mesh->nx() - 3, mesh->nx()-3,+3*diff, INSERT_VALUES);
 
     MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY);
     MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY);
@@ -113,8 +122,8 @@ void solve_upwind(std::vector<double> &T, SimpleMesh *mesh, double u, double D) 
     Vec b;
     MatCreateVecs(A, &b, NULL);
 
-    VecSetValue(b, 0, T[0] * (diff - west_adv), INSERT_VALUES);
-    VecSetValue(b, mesh->nx() - 3, T[mesh->nx() - 1] * (diff - east_adv), INSERT_VALUES);
+    VecSetValue(b, 0, T[0] * (adv +2*diff), INSERT_VALUES);
+    VecSetValue(b, mesh->nx() - 3, T[mesh->nx() - 1] * (+2*diff -adv), INSERT_VALUES);
 
     VecAssemblyBegin(b);
     VecAssemblyEnd(b);
@@ -135,7 +144,7 @@ void solve_upwind(std::vector<double> &T, SimpleMesh *mesh, double u, double D) 
 
     // Optional: View solution and solver stats
     KSPView(ksp, PETSC_VIEWER_STDOUT_SELF);
-    VecView(T_internal, PETSC_VIEWER_STDOUT_SELF);
+    // VecView(T_internal, PETSC_VIEWER_STDOUT_SELF);
 
     PetscScalar temp;
     for(int i = 1; i < mesh->nx() - 1; i++){
